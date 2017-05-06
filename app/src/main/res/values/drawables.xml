@@ -1,0 +1,4 @@
+<resources xmlns:android="http://schemas.android.com/apk/res/android">
+    <item name="ic_menu_discover" type="drawable">@android:drawable/ic_menu_search</item>
+    <item name="ic_menu_fav" type="drawable">@android:drawable/star_big_off</item>
+</resources>

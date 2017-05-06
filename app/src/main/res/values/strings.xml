@@ -1,0 +1,14 @@
+<resources>
+    <string name="app_name">MyApplication</string>
+
+    <string name="navigation_drawer_open">Open navigation drawer</string>
+    <string name="navigation_drawer_close">Close navigation drawer</string>
+
+    <string name="action_settings">Settings</string>
+    <string name="doordash">DoorDash</string>
+    <string name="add_favs">Add to Favorites</string>
+    <string name="empty_list">Aww, You don\'t have a favorite place yet! Go ahead and Discover!</string>
+    <string name="remove_from_fav">Remove from Favorites</string>
+    <string name="success_remove">Successfully removed from Favorites</string>
+    <string name="success_add">Successfully added to your Favorites</string>
+</resources>
