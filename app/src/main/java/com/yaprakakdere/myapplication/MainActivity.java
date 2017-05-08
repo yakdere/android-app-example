@@ -14,23 +14,15 @@ import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
 
-import com.android.volley.Cache;
-import com.android.volley.Network;
-import com.android.volley.RequestQueue;
-import com.android.volley.toolbox.BasicNetwork;
-import com.android.volley.toolbox.DiskBasedCache;
-import com.android.volley.toolbox.HurlStack;
-import com.android.volley.toolbox.Volley;
 import com.yaprakakdere.myapplication.service.MResultReceiver;
 
 public class MainActivity extends AppCompatActivity
-        implements NavigationView.OnNavigationItemSelectedListener, DiscoverDetailsFragment.DetailsButtonActionListener{
+        implements NavigationView.OnNavigationItemSelectedListener, DiscoverDetailsFragment.DetailsFragmentActionsListener {
 
     private NavigationView navigationView;
     private DrawerLayout mDrawer;
     private Toolbar toolbar;
     ActionBarDrawerToggle toggle;
-    private MyApplication application;
     private MResultReceiver mReceiver;
 
     @Override
@@ -42,7 +34,6 @@ public class MainActivity extends AppCompatActivity
         toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        application = (MyApplication) getApplication();
         mReceiver = new MResultReceiver(new Handler());
 
         mDrawer = (DrawerLayout) findViewById(R.id.drawer_layout);
@@ -77,12 +68,6 @@ public class MainActivity extends AppCompatActivity
         // automatically handle clicks on the Home/Up button, so long
         // as you specify a parent activity in AndroidManifest.xml.
         int id = item.getItemId();
-
-        //noinspection SimplifiableIfStatement
-        if (id == R.id.action_settings) {
-            return true;
-        }
-
         return super.onOptionsItemSelected(item);
     }
 
@@ -115,8 +100,8 @@ public class MainActivity extends AppCompatActivity
             fragment = fragmentManager.findFragmentByTag(tag);
         }
 
-
-        fragmentManager.beginTransaction().replace(R.id.flContent, fragment, tag).commit();
+        fragmentManager.beginTransaction()
+                .replace(R.id.flContent, fragment, tag).commit();
 
         // Highlight the selected item has been done by NavigationView
         item.setChecked(true);
@@ -151,12 +136,7 @@ public class MainActivity extends AppCompatActivity
     }
 
     @Override
-    public void onButtonClicked(String resId, boolean isFav) {
-        FragmentManager fragmentManager = getSupportFragmentManager();
-        FavoritesFragment favoritesFragment = (FavoritesFragment) fragmentManager.findFragmentByTag(FavoritesFragment.FAVORITES_FRAGMENT_TAG);
-        if (favoritesFragment != null) {
-            favoritesFragment.onFavButtonClicked(resId, isFav);
-        }
-
+    public void changeActionBar(String title) {
+        // TODO update action bar title here
     }
 }

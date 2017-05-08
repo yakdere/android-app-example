@@ -4,8 +4,6 @@ package com.yaprakakdere.myapplication.model;
  * Created by yaprakakdere on 5/4/17.
  */
 
-
-
 public class Restaurant {
     String id;
     String name;

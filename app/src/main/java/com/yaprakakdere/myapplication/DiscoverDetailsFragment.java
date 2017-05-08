@@ -1,6 +1,5 @@
 package com.yaprakakdere.myapplication;
 
-import android.app.Activity;
 import android.os.Bundle;
 import android.support.annotation.Nullable;
 import android.support.v4.app.Fragment;
@@ -20,28 +19,28 @@ import com.yaprakakdere.myapplication.service.MResultReceiver;
 import com.yaprakakdere.myapplication.service.RequestIntentService;
 import com.yaprakakdere.myapplication.storage.Preferences;
 
-import java.util.ArrayList;
-
 /**
  * Created by yaprakakdere on 5/4/17.
  */
 
 public class DiscoverDetailsFragment extends Fragment implements MResultReceiver.Receiver {
 
+    public static final String RES_DETAILS_FRAGMENT_TAG = DiscoverDetailsFragment.class.getCanonicalName() + ".TAG";
     private static final String RES_ID = "res_id";
     private static final String RES_OBJECT = "res_obj";
+    private static final String RES_TITLE = "res_title";
     private ImageView imageView;
     private TextView details, status, rating;
     private Button addToFavButton;
-    private String resID;
+    private String resID, resTitle;
     private Restaurant restaurant;
     private MResultReceiver mResultReceiver;
-    private Gson gson;
-    private DetailsButtonActionListener listener;
+    private DetailsFragmentActionsListener listener;
 
-    public static DiscoverDetailsFragment newInstance(String id) {
+    public static DiscoverDetailsFragment newInstance(String id, String title) {
         Bundle bundle = new Bundle();
         bundle.putString(RES_ID, id);
+        bundle.putString(RES_TITLE, title);
         DiscoverDetailsFragment discoverDetailsFragment = new DiscoverDetailsFragment();
         discoverDetailsFragment.setArguments(bundle);
         return discoverDetailsFragment;
@@ -51,13 +50,13 @@ public class DiscoverDetailsFragment extends Fragment implements MResultReceiver
     public void onCreate(@Nullable Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         mResultReceiver = ((MainActivity) getActivity()).getReceiver();
-        listener = (DetailsButtonActionListener) getActivity();
+        listener = (DetailsFragmentActionsListener) getActivity();
         // retain this fragment when activity is re-initialized
         setRetainInstance(true);
     }
 
-    public interface DetailsButtonActionListener {
-        void onButtonClicked(String restaurant, boolean isFav);
+    public interface DetailsFragmentActionsListener {
+        void changeActionBar(String title);
     }
 
     @Nullable
@@ -69,12 +68,16 @@ public class DiscoverDetailsFragment extends Fragment implements MResultReceiver
         status = (TextView) view.findViewById(R.id.tvDetailsStatus);
         rating = (TextView) view.findViewById(R.id.tvDetailsRating);
         addToFavButton = (Button) view.findViewById(R.id.buttonAddFavs);
-        gson = new GsonBuilder().disableHtmlEscaping().create();
         if (savedInstanceState != null) {
             resID = savedInstanceState.getString(RES_ID);
-            restaurant = gson.fromJson(savedInstanceState.getString(RES_OBJECT), Restaurant.class);
+            resTitle = savedInstanceState.getString(RES_TITLE);
+            restaurant = MyApplication.getGson().fromJson(savedInstanceState.getString(RES_OBJECT), Restaurant.class);
         } else if (getArguments() != null) {
             resID = getArguments().getString(RES_ID);
+            resTitle = getArguments().getString(RES_TITLE);
+        }
+        if (listener != null) {
+            listener.changeActionBar(resTitle);
         }
         return view;
     }
@@ -100,11 +103,19 @@ public class DiscoverDetailsFragment extends Fragment implements MResultReceiver
     }
 
     @Override
+    public void onSaveInstanceState(Bundle outState) {
+        super.onSaveInstanceState(outState);
+        outState.putString(RES_ID, resID);
+        outState.putString(RES_TITLE, resTitle);
+        outState.putString(RES_OBJECT, MyApplication.getGson().toJson(restaurant));
+    }
+
+    @Override
     public void onReceiveResult(int resultCode, Bundle resultData) {
         if (resultData.getInt(RequestIntentService.RESULT_FIELD_TYPE) == RequestIntentService.RESULT_TYPE_DISCOVER_DETAILS) {
             if (resultData.getInt("status") == RequestIntentService.STATUS_SUCCESS) {
                 String encodedRestaurant = resultData.getString(RequestIntentService.RESULT_ACTUAL_RESULT);
-                restaurant = gson.fromJson(encodedRestaurant, Restaurant.class);
+                restaurant = MyApplication.getGson().fromJson(encodedRestaurant, Restaurant.class);
                 setUI(restaurant);
             }
         }
@@ -116,20 +127,14 @@ public class DiscoverDetailsFragment extends Fragment implements MResultReceiver
             Preferences.getInstance(getContext()).removeFromFav(resID);
             Toast.makeText(getContext(), getString(R.string.success_remove), Toast.LENGTH_SHORT).show();
             updateFavButton();
-            if (listener != null) {
-                listener.onButtonClicked(gson.toJson(restaurant), false);
-            }
         }
     };
 
     View.OnClickListener addToFavClickListener = new View.OnClickListener() {
         @Override
         public void onClick(View v) {
-            Preferences.getInstance(getContext()).addResToFavs(resID, gson.toJson(restaurant));
+            Preferences.getInstance(getContext()).addResToFavs(resID, MyApplication.getGson().toJson(restaurant));
             Toast.makeText(getContext(), getString(R.string.success_add), Toast.LENGTH_SHORT).show();
-            if (listener != null) {
-                listener.onButtonClicked(gson.toJson(restaurant), true);
-            }
             updateFavButton();
         }
     };

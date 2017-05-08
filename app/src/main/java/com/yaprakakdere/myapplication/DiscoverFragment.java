@@ -10,8 +10,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 import com.yaprakakdere.myapplication.adapters.RestaurantsAdapter;
 import com.yaprakakdere.myapplication.model.Restaurant;
@@ -39,7 +37,7 @@ public class DiscoverFragment extends Fragment implements MResultReceiver.Receiv
     private RecyclerView recyclerView;
     private Parcelable listState;
     private LinearLayoutManager layoutManager;
-    private ArrayList<Restaurant> restaurants;
+    private ArrayList<Restaurant> restaurants = new ArrayList<>();
     private MResultReceiver mResultReceiver;
 
     @Override
@@ -58,9 +56,8 @@ public class DiscoverFragment extends Fragment implements MResultReceiver.Receiv
         listState = layoutManager.onSaveInstanceState();
         outState.putParcelable(LIST_STATE_KEY, listState);
         Type type = new TypeToken<ArrayList<Restaurant>>(){}.getType();
-        Gson gson = new GsonBuilder().disableHtmlEscaping().create();
         //the disableHtmlEscaping() method tells Gson not to escape HTML characters such as <, >, &, =, and '
-        outState.putString(RESTAURANTS, gson.toJson(restaurants, type) );
+        outState.putString(RESTAURANTS, MyApplication.getGson().toJson(restaurants, type) );
     }
 
     @Override
@@ -70,8 +67,7 @@ public class DiscoverFragment extends Fragment implements MResultReceiver.Receiv
             listState = savedInstanceState.getParcelable(LIST_STATE_KEY);
             String encodedRes = savedInstanceState.getString(RESTAURANTS);
             Type type = new TypeToken<ArrayList<Restaurant>>(){}.getType();
-            Gson gson = new GsonBuilder().disableHtmlEscaping().create();
-            restaurants = gson.fromJson(encodedRes, type);
+            restaurants = MyApplication.getGson().fromJson(encodedRes, type);
         }
     }
 
@@ -83,6 +79,9 @@ public class DiscoverFragment extends Fragment implements MResultReceiver.Receiv
         // Set layout manager to position the items
         layoutManager = new LinearLayoutManager(getContext());
         recyclerView.setLayoutManager(layoutManager);
+        RestaurantsAdapter adapter = new RestaurantsAdapter(getContext(), restaurants);
+        // Attach the adapter to the recyclerview to populate items
+        recyclerView.setAdapter(adapter);
 
         return view;
     }
@@ -96,11 +95,7 @@ public class DiscoverFragment extends Fragment implements MResultReceiver.Receiv
             layoutManager.onRestoreInstanceState(listState);
         }
 
-        if (restaurants != null && restaurants.size() > 0) {
-            RestaurantsAdapter adapter = new RestaurantsAdapter(getContext(), restaurants);
-            // Attach the adapter to the recyclerview to populate items
-            recyclerView.setAdapter(adapter);
-        } else {
+        if (restaurants.size() == 0) {
             RequestIntentService.startActionFetchRes(this.getContext(), mResultReceiver);
         }
     }
@@ -119,12 +114,8 @@ public class DiscoverFragment extends Fragment implements MResultReceiver.Receiv
                 String encodedRestaurants = resultData.getString(RequestIntentService.RESULT_ACTUAL_RESULT);
 
                 Type type = new TypeToken<ArrayList<Restaurant>>(){}.getType();
-                Gson gson = new GsonBuilder().create();
-                restaurants = gson.fromJson(encodedRestaurants, type);
-                RestaurantsAdapter adapter = new RestaurantsAdapter(getContext(), restaurants);
-                // Attach the adapter to the recyclerview to populate items
-                recyclerView.setAdapter(adapter);
-
+                restaurants = MyApplication.getGson().fromJson(encodedRestaurants, type);
+                ((RestaurantsAdapter) recyclerView.getAdapter()).updateData(restaurants);
             }
         }
     }

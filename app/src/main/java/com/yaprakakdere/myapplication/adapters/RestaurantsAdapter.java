@@ -18,13 +18,14 @@ import com.yaprakakdere.myapplication.model.Restaurant;
 
 import java.util.ArrayList;
 
+import static com.yaprakakdere.myapplication.DiscoverDetailsFragment.RES_DETAILS_FRAGMENT_TAG;
+
 /**
  * Created by yaprakakdere on 5/4/17.
  */
 
 public class RestaurantsAdapter extends RecyclerView.Adapter<RestaurantsAdapter.ViewHolder> {
 
-    private static final String RES_DETAILS_FRAGMENT_TAG = "res details tag";
     private final Context context;
     private final ArrayList<Restaurant> restaurants;
 
@@ -32,6 +33,13 @@ public class RestaurantsAdapter extends RecyclerView.Adapter<RestaurantsAdapter.
         this.context = context;
         this.restaurants = restaurants;
     }
+
+    public void updateData(ArrayList<Restaurant> res) {
+        restaurants.clear();
+        restaurants.addAll(res);
+        notifyDataSetChanged();
+    }
+
     @Override
     public ViewHolder onCreateViewHolder(ViewGroup parent, int viewType) {
         Context context = parent.getContext();
@@ -60,10 +68,15 @@ public class RestaurantsAdapter extends RecyclerView.Adapter<RestaurantsAdapter.
             @Override
             public void onClick(View v) {
                 FragmentManager fm = ((FragmentActivity) context).getSupportFragmentManager();
-                DiscoverDetailsFragment fragment = DiscoverDetailsFragment.newInstance(restaurant.getId());
                 FragmentTransaction fragmentTransaction = fm.beginTransaction();
-                fragmentTransaction.replace(android.R.id.content, fragment);
-                fragmentTransaction.addToBackStack(RES_DETAILS_FRAGMENT_TAG);
+                if (fm.findFragmentByTag(RES_DETAILS_FRAGMENT_TAG) != null) {
+                    fragmentTransaction.replace(R.id.flContent, fm.findFragmentByTag(RES_DETAILS_FRAGMENT_TAG));
+
+                } else {
+                    DiscoverDetailsFragment fragment = DiscoverDetailsFragment.newInstance(restaurant.getId(), restaurant.getName());
+                    fragmentTransaction.replace(R.id.flContent, fragment);
+                    fragmentTransaction.addToBackStack(RES_DETAILS_FRAGMENT_TAG);
+                }
                 fragmentTransaction.commitAllowingStateLoss();
             }
         });

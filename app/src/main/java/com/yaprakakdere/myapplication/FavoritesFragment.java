@@ -10,8 +10,6 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 
-import com.google.gson.Gson;
-import com.google.gson.GsonBuilder;
 import com.google.gson.reflect.TypeToken;
 import com.yaprakakdere.myapplication.adapters.RestaurantsAdapter;
 import com.yaprakakdere.myapplication.model.Restaurant;
@@ -35,7 +33,6 @@ public class FavoritesFragment extends Fragment {
     private Parcelable listState;
     private LinearLayoutManager layoutManager;
     private ArrayList<Restaurant> restaurants = new ArrayList<>();
-    private Gson gson;
 
     public static Fragment newInstance() {
         FavoritesFragment myFragment = new FavoritesFragment();
@@ -56,7 +53,7 @@ public class FavoritesFragment extends Fragment {
         outState.putParcelable(LIST_STATE_KEY, listState);
         Type type = new TypeToken<ArrayList<Restaurant>>(){}.getType();
         //the disableHtmlEscaping() method tells Gson not to escape HTML characters such as <, >, &, =, and '
-        outState.putString(RESTAURANTS, gson.toJson(restaurants, type) );
+        outState.putString(RESTAURANTS, MyApplication.getGson().toJson(restaurants, type) );
     }
 
     @Override
@@ -66,7 +63,7 @@ public class FavoritesFragment extends Fragment {
             listState = savedInstanceState.getParcelable(LIST_STATE_KEY);
             String encodedRes = savedInstanceState.getString(RESTAURANTS);
             Type type = new TypeToken<ArrayList<Restaurant>>(){}.getType();
-            restaurants = gson.fromJson(encodedRes, type);
+            this.restaurants = MyApplication.getGson().fromJson(encodedRes, type);
         }
     }
 
@@ -78,7 +75,8 @@ public class FavoritesFragment extends Fragment {
         layoutManager = new LinearLayoutManager(getContext());
         recyclerView = (RecyclerView) view.findViewById(R.id.rvRestaurants);
         recyclerView.setLayoutManager(layoutManager);
-        gson = new GsonBuilder().disableHtmlEscaping().create();
+        RestaurantsAdapter restaurantsAdapter = new RestaurantsAdapter(getContext(), restaurants);
+        recyclerView.setAdapter(restaurantsAdapter);
         return view;
     }
 
@@ -90,37 +88,27 @@ public class FavoritesFragment extends Fragment {
         }
 
         if (!Preferences.getInstance(getContext()).getFavsRes().isEmpty()) {
+            ArrayList<Restaurant> cachedRes = new ArrayList<>();
             for (String s : Preferences.getInstance(getContext()).getFavsRes().values()) {
-                Restaurant restaurant = gson.fromJson(s, Restaurant.class);
-                restaurants.add(restaurant);
+                Restaurant r = MyApplication.getGson().fromJson(s, Restaurant.class);
+                cachedRes.add(r);
             }
-        }
-
-        if (restaurants != null && restaurants.size() > 0) {
-            RestaurantsAdapter adapter = new RestaurantsAdapter(getContext(), restaurants);
-            // Attach the adapter to the recyclerview to populate items
-            recyclerView.setAdapter(adapter);
-        } else {
-            emptyList.setVisibility(View.VISIBLE);
-            recyclerView.setVisibility(View.GONE);
-        }
-    }
-
-    public void onFavButtonClicked(String restaurant, boolean isFav) {
-        Restaurant modifiedRes = gson.fromJson(restaurant, Restaurant.class);
-        if (isFav) {
-            if (restaurants == null) {
-                restaurants = new ArrayList<Restaurant>();
-                restaurants.add(modifiedRes);
-                recyclerView.getAdapter().notifyDataSetChanged();
+            if (cachedRes.size() != this.restaurants.size()) {
+                this.restaurants = cachedRes;
+                ((RestaurantsAdapter) recyclerView.getAdapter()).updateData(this.restaurants);
             } else {
-                restaurants.add(0, modifiedRes);
-                recyclerView.getAdapter().notifyItemInserted(0);
+                //TODO compare with local cache with cached data in shared pref only update modified items for performance
             }
-        } else if (restaurants != null && restaurants.contains(modifiedRes)) {
-            int pos = restaurants.indexOf(modifiedRes);
-            restaurants.remove(modifiedRes);
-            recyclerView.getAdapter().notifyItemRemoved(pos);
+        } else {
+            this.restaurants.clear();
         }
+
+       if (this.restaurants.size() == 0){
+           emptyList.setVisibility(View.VISIBLE);
+           recyclerView.setVisibility(View.GONE);
+       } else {
+           emptyList.setVisibility(View.GONE);
+           recyclerView.setVisibility(View.VISIBLE);
+       }
     }
 }
